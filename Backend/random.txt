@@ -1,0 +1,591 @@
+async function initDb() {
+  await pool.query("CREATE EXTENSION IF NOT EXISTS pgcrypto");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT,
+      role TEXT CHECK(role IN ('student','teacher','admin')) NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS students (
+      user_id UUID PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+      roll_no TEXT UNIQUE NOT NULL,
+      sname TEXT NOT NULL,
+      semester INT CHECK(semester BETWEEN 1 AND 10),
+      programme TEXT,
+      batch INT,
+      photo_url TEXT
+    );
+  `);
+  await pool.query(`ALTER TABLE students ADD COLUMN IF NOT EXISTS blocked BOOLEAN`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS teachers (
+      user_id UUID PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+      abbr TEXT UNIQUE NOT NULL,
+      tname TEXT NOT NULL,
+      designation TEXT,
+      specialization TEXT,
+      dept TEXT,
+      photo_url TEXT
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      otp TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      PRIMARY KEY (user_id, otp)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      email TEXT PRIMARY KEY,
+      otp TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS subjects (
+      subject_id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      teacher_id UUID REFERENCES users(user_id) ON DELETE SET NULL
+    );
+  `);
+  await pool.query(`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS sub_code TEXT`);
+  await pool.query(`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS sub_name TEXT`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS subjects_sub_code_unique ON subjects(sub_code)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS enrolments (
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      subject_id INT,
+      PRIMARY KEY(user_id, subject_id)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS classes (
+      class_id SERIAL PRIMARY KEY,
+      subject_id INT,
+      held_on DATE NOT NULL
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS attendance (
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      class_id INT,
+      status TEXT CHECK(status IN ('present','absent')) NOT NULL,
+      PRIMARY KEY(user_id, class_id)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS scan_events (
+      id SERIAL PRIMARY KEY,
+      user_id UUID,
+      code TEXT,
+      user_agent TEXT,
+      platform TEXT,
+      language TEXT,
+      res_w INT,
+      res_h INT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS course_offerings (
+      course_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      teacher_id UUID REFERENCES teachers(user_id),
+      sub_code TEXT REFERENCES subjects(sub_code),
+      semester INT,
+      programme TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS student_enrollments (
+      enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id UUID REFERENCES students(user_id),
+      course_id UUID REFERENCES course_offerings(course_id),
+      UNIQUE(student_id, course_id)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS qr_sessions (
+      qr_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      course_id UUID REFERENCES course_offerings(course_id),
+      location_created_from TEXT,
+      timespan_seconds INT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      expires_at TIMESTAMP,
+      scan_count INT DEFAULT 0
+    );
+  `);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS scan_id UUID DEFAULT gen_random_uuid()`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS qr_id UUID REFERENCES qr_sessions(qr_id)`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(user_id)`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS device_fingerprint TEXT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS device_meta JSONB`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS ip_address TEXT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS geo TEXT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS token_age_seconds INT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS ml_score DOUBLE PRECISION`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'new'`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS scan_events_scan_id_unique ON scan_events(scan_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS attendance_id UUID DEFAULT gen_random_uuid()`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS scan_id UUID UNIQUE REFERENCES scan_events(scan_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(user_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS course_id UUID REFERENCES course_offerings(course_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS scanned_time TIMESTAMP`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS photo_url TEXT`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS location_scanned_from TEXT`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS date DATE`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS verification_logs (
+      verify_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      scan_id UUID REFERENCES scan_events(scan_id),
+      teacher_id UUID REFERENCES teachers(user_id),
+      verification_time TIMESTAMP DEFAULT NOW(),
+      result TEXT CHECK(result IN ('accepted','rejected')),
+      comment TEXT
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reports (
+      report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      teacher_id UUID REFERENCES teachers(user_id),
+      course_id UUID REFERENCES course_offerings(course_id),
+      report_type TEXT,
+      generated_at TIMESTAMP DEFAULT NOW(),
+      file_url TEXT
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      token_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      token_hash TEXT,
+      expires_at TIMESTAMP NOT NULL,
+      revoked BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+}
+
+
+
+
+
+async function initMailer() {
+  if (SMTP_USER) {
+    const host = SMTP_HOST || "smtp.gmail.com";
+    const port = Number(SMTP_PORT || 587);
+    const secure = String(SMTP_SECURE || "false").toLowerCase() === "true";
+    mailer = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user: SMTP_USER, pass: SMTP_PASS || EMAIL_PASSWORD },
+      pool: true,
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
+    });
+    mailerMeta = { host, port, secure, from: SMTP_USER };
+  } else if (EMAIL_USER && EMAIL_PASSWORD) {
+    const host = "smtp.gmail.com";
+    const port = 587;
+    const secure = false;
+    mailer = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user: EMAIL_USER, pass: EMAIL_PASSWORD },
+      pool: true,
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
+    });
+    mailerMeta = { host, port, secure, from: EMAIL_USER };
+  } else {
+    const account = await nodemailer.createTestAccount();
+    mailer = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: { user: account.user, pass: account.pass },
+    });
+    usingTestMailer = true;
+    mailerMeta = { host: account.smtp.host, port: account.smtp.port, secure: account.smtp.secure, from: account.user };
+  }
+  try {
+    await mailer.verify();
+  } catch (e) {
+    console.error("Email transport verification failed:", e?.message || String(e));
+  }
+}
+
+
+
+
+
+
+
+async function sendEmail(to, subject, text) {
+  try {
+    const from = (SMTP_USER || EMAIL_USER) || (usingTestMailer ? "test@localhost" : undefined);
+    const info = await mailer.sendMail({ from, to, subject, text });
+    const preview = usingTestMailer ? nodemailer.getTestMessageUrl(info) : null;
+    return { ok: true, preview };
+  } catch (e) {
+    return { ok: false, error: "Email delivery failed", code: e.code, reason: e.response };
+  }
+}
+ 
+
+
+ // import { createApp } from "./src/app.js";
+// import { initDb as initDbModule } from "./src/config/db.js";
+// import { postSignup, postSignin, postSignupRequestOtp, postForgot, postReset, getEmailDiagnostics } from "./src/controllers/authController.js";
+// import { auth, requireAdmin } from "./src/middleware/auth.js";
+// import { getSubjects, getStudentAttendance } from "./src/controllers/studentController.js";
+// import { postMarkAttendance } from "./src/controllers/attendanceController.js";
+// import { getUsers } from "./src/controllers/adminController.js";
+
+
+
+// const app = createApp();
+
+// app.post("/api/auth/signup", postSignup);
+
+// app.post("/api/auth/signin", postSignin);
+
+// app.post("/api/auth/forgot", postForgot);
+
+// app.post("/api/auth/signup/request-otp", postSignupRequestOtp);
+
+// app.get("/api/diagnostics/email", getEmailDiagnostics);
+
+// app.post("/api/auth/reset", postReset);
+
+// app.get("/api/admin/users", auth, requireAdmin, getUsers);
+
+// app.get("/api/student/subjects", auth, getSubjects);
+
+// app.get("/api/student/attendance", auth, getStudentAttendance);
+
+// app.post("/api/attendance/mark", auth, async (req, res) => {
+//   try {
+//     const { code, device } = req.body || {};
+//     await pool.query(
+//       "INSERT INTO scan_events(user_id, code, user_agent, platform, language, res_w, res_h) VALUES($1,$2,$3,$4,$5,$6,$7)",
+//       [req.user.uid, code || null, device?.userAgent || null, device?.platform || null, device?.language || null, device?.resolution?.w || null, device?.resolution?.h || null]
+//     );
+//     // naive: mark attendance for today's class for the first enrolled subject
+//     const enrol = await pool.query("SELECT subject_id FROM enrolments WHERE user_id=$1 LIMIT 1", [req.user.uid]);
+//     if (!enrol.rows[0]) return res.status(400).json({ error: "Not enrolled" });
+//     const subjectId = enrol.rows[0].subject_id;
+//     const today = new Date();
+//     const ymd = today.toISOString().slice(0,10);
+//     const c = await pool.query("SELECT class_id FROM classes WHERE subject_id=$1 AND held_on=$2", [subjectId, ymd]);
+//     let classId;
+//     if (c.rows[0]) classId = c.rows[0].class_id;
+//     else {
+//       const ins = await pool.query("INSERT INTO classes(subject_id, held_on) VALUES($1,$2) RETURNING class_id", [subjectId, ymd]);
+//       classId = ins.rows[0].class_id;
+//     }
+//     await pool.query("INSERT INTO attendance(user_id, class_id, status) VALUES($1,$2,'present') ON CONFLICT (user_id, class_id) DO UPDATE SET status='present'", [req.user.uid, classId]);
+//     res.json({ ok: true });
+//   } catch { res.status(500).json({ error: "Server error" }); }
+// });
+
+// Promise.all([initDbModule(), initMailerModule()])
+//   .then(() => {
+//     const serverApp = createApp();
+//     serverApp.listen(PORT, () => console.log(`ClassQR API listening on :${PORT}`));
+//   })
+//   .catch((e) => {
+//     console.error("Database initialization failed:", e?.message || String(e));
+//     console.error("Ensure PG_USER, PG_HOST, PG_DATABASE, PG_PASSWORD, PG_PORT are set correctly.");
+//     process.exit(1);
+//   });
+// // migrated to src/middleware/auth.js and src/controllers/authController.js
+
+
+  await pool.query(`ALTER TABLE students ADD COLUMN IF NOT EXISTS blocked BOOLEAN`);
+
+
+
+  await pool.query(`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS sub_code TEXT`);
+  await pool.query(`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS sub_name TEXT`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS subjects_sub_code_unique ON subjects(sub_code)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS enrolments (
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      subject_id INT,
+      PRIMARY KEY(user_id, subject_id)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS classes (
+      class_id SERIAL PRIMARY KEY,
+      subject_id INT,
+      held_on DATE NOT NULL
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS attendance (
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      class_id INT,
+      status TEXT CHECK(status IN ('present','absent')) NOT NULL,
+      PRIMARY KEY(user_id, class_id)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS scan_events (
+      id SERIAL PRIMARY KEY,
+      user_id UUID,
+      code TEXT,
+      user_agent TEXT,
+      platform TEXT,
+      language TEXT,
+      res_w INT,
+      res_h INT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS course_offerings (
+      course_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      teacher_id UUID REFERENCES teachers(user_id),
+      sub_code TEXT REFERENCES subjects(sub_code),
+      semester INT,
+      programme TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS student_enrollments (
+      enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      student_id UUID REFERENCES students(user_id),
+      course_id UUID REFERENCES course_offerings(course_id),
+      UNIQUE(student_id, course_id)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS qr_sessions (
+      qr_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      course_id UUID REFERENCES course_offerings(course_id),
+      location_created_from TEXT,
+      timespan_seconds INT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      expires_at TIMESTAMP,
+      scan_count INT DEFAULT 0
+    );
+  `);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS scan_id UUID DEFAULT gen_random_uuid()`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS qr_id UUID REFERENCES qr_sessions(qr_id)`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(user_id)`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS device_fingerprint TEXT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS device_meta JSONB`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS ip_address TEXT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS geo TEXT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS token_age_seconds INT`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS ml_score DOUBLE PRECISION`);
+  await pool.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'new'`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS scan_events_scan_id_unique ON scan_events(scan_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS attendance_id UUID DEFAULT gen_random_uuid()`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS scan_id UUID UNIQUE REFERENCES scan_events(scan_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(user_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS course_id UUID REFERENCES course_offerings(course_id)`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS scanned_time TIMESTAMP`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS photo_url TEXT`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS location_scanned_from TEXT`);
+  await pool.query(`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS date DATE`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS verification_logs (
+      verify_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      scan_id UUID REFERENCES scan_events(scan_id),
+      teacher_id UUID REFERENCES teachers(user_id),
+      verification_time TIMESTAMP DEFAULT NOW(),
+      result TEXT CHECK(result IN ('accepted','rejected')),
+      comment TEXT
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reports (
+      report_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      teacher_id UUID REFERENCES teachers(user_id),
+      course_id UUID REFERENCES course_offerings(course_id),
+      report_type TEXT,
+      generated_at TIMESTAMP DEFAULT NOW(),
+      file_url TEXT
+    );
+  `);
+
+
+  export async function initDb() {
+  await pool.query("CREATE EXTENSION IF NOT EXISTS pgcrypto");
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users ( 
+      user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT,
+      role TEXT CHECK(role IN ('student','teacher','admin')) NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS students (
+      user_id UUID PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+      roll_no TEXT UNIQUE NOT NULL,
+      sname TEXT NOT NULL,
+      semester INT CHECK(semester BETWEEN 1 AND 10),
+      programme TEXT,
+      batch INT,
+      photo_url TEXT,
+      is_blocked BOOLEAN DEFAULT FALSE
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS teachers (
+      user_id UUID PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+      abbr TEXT UNIQUE NOT NULL,
+      tname TEXT NOT NULL,
+      designation TEXT,
+      specialization TEXT,
+      dept TEXT,
+      photo_url TEXT
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      otp TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      PRIMARY KEY (user_id, otp)
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      email TEXT PRIMARY KEY,
+      otp TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS subjects (
+      subject_id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      teacher_id UUID REFERENCES users(user_id) ON DELETE SET NULL
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      token_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      token_hash TEXT,
+      expires_at TIMESTAMP NOT NULL,
+      revoked BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+}
+
+
+
+
+export async function initMail(Email) {
+  if (!Email) throw new Error("Email is required");
+  const mailSender = nodemailer.createTransport({ host: "gmail", auth: { user: EMAIL_USER, pass: APP_PASS } });
+}
+
+let mailer;
+let usingTestMailer = false;
+let mailerMeta = { host: null, port: null, secure: null, from: null };
+
+export async function initMailer() {
+  if (SMTP_USER) {
+    const host = SMTP_HOST || "smtp.gmail.com";
+    const port = Number(SMTP_PORT || 587);
+    const secure = String(SMTP_SECURE || "false").toLowerCase() === "true";
+    mailer = nodemailer.createTransport({ host, port, secure, auth: { user: SMTP_USER, pass: SMTP_PASS || EMAIL_PASSWORD }, pool: true, connectionTimeout: 10000, socketTimeout: 10000 });
+    mailerMeta = { host, port, secure, from: SMTP_USER };
+  } else if (EMAIL_USER && EMAIL_PASSWORD) {
+    const host = "smtp.gmail.com";
+    const port = 587;
+    const secure = false;
+    mailer = nodemailer.createTransport({ host, port, secure, auth: { user: EMAIL_USER, pass: EMAIL_PASSWORD }, pool: true, connectionTimeout: 10000, socketTimeout: 10000 });
+    mailerMeta = { host, port, secure, from: EMAIL_USER };
+  } else {
+    const account = await nodemailer.createTestAccount();
+    mailer = nodemailer.createTransport({ host: account.smtp.host, port: account.smtp.port, secure: account.smtp.secure, auth: { user: account.user, pass: account.pass } });
+    usingTestMailer = true;
+    mailerMeta = { host: account.smtp.host, port: account.smtp.port, secure: account.smtp.secure, from: account.user };
+  }
+  try {
+    await mailer.verify();
+  } catch (e) {}
+}
+
+export async function sendEmail(to, subject, text) {
+  try {
+    const from = (SMTP_USER || EMAIL_USER) || (usingTestMailer ? "test@localhost" : undefined);
+    const info = await mailer.sendMail({ from, to, subject, text });
+    const preview = usingTestMailer ? nodemailer.getTestMessageUrl(info) : null;
+    return { ok: true, preview };
+  } catch (e) {
+    return { ok: false, error: "Email delivery failed", code: e.code, reason: e.response };
+  }
+}
+
+export async function verifyMailer() {
+  try {
+    await mailer.verify();
+    return { ok: true, usingTestMailer, transport: mailerMeta };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
+// // Login controller 
+// export const login = async (req, res) => {
+//   try {
+//     const { email, password, role } = req.body;
+
+//     if (!email || !password || !role) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Email, password and role are required",
+//       });
+//     }
+
+//     const user = await UserModel.getUserByEmail(email);
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "User not found.",
+//       });
+//     }
+
+//     // Role check – user must login with correct role
+//     if (user.role !== role) {
+//       return res.status(403).json({
+//         success: false,
+//         message: `This account is registered as '${user.role}', not '${role}'.`,
+//       });
+//     }
+//     // Email / account verification check
+//     if (!user.isverified) {
+//       return res.status(403).json({
+//         success: false,
+//         message: "Please verify your email before logging in.",
+//       });
+//     }
+//     // Authenticate user (from service)
+//     await loginUser({email, password});;
+//   } catch (err) {
+//     res.status(401).json({ success: false,from: "Login Controller", message: err.message });
+//   }
+// };
+
+
+
