@@ -17,7 +17,7 @@ export class TeacherController {
   // ADMIN → GET ONE TEACHER
   static async getOne(req, res) {
     try {
-      res.json(req.teacher);
+      res.json(req.teacher); 
     } catch (err) {
       res.status(500).json({ error: "Server error" });
     }

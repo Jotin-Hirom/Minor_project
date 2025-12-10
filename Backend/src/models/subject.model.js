@@ -3,18 +3,18 @@ import pool from "../config/pool.js";
 export class SubjectModel {
 
     // CREATE SUBJECT
-    static async createSubject({ sub_code, sub_name, teacher_id }) {
+    static async createSubject({ code, course_name, teacher_id }) {
         const client = await pool.connect();
         try {
             await client.query("BEGIN");
 
             const q = `
-        INSERT INTO subjects (sub_code, sub_name, teacher_id)
+        INSERT INTO subjects (code, course_name, teacher_id)
         VALUES ($1, $2, $3)
         RETURNING *;
       `;
 
-            const values = [sub_code, sub_name, teacher_id];
+            const values = [code, course_name, teacher_id];
 
             const { rows } = await client.query(q, values);
 
@@ -33,11 +33,11 @@ export class SubjectModel {
     static async getAllSubjects() {
         const q = `
       SELECT 
-        s.sub_code, s.sub_name, s.teacher_id,
-        t.tname, t.abbr, t.dept
+        s.code, s.course_name, s.teacher_id,
+        t.tname, t.dept
       FROM subjects s
       LEFT JOIN teachers t ON t.user_id = s.teacher_id
-      ORDER BY s.sub_code;
+      ORDER BY s.code;
     `;
         const { rows } = await pool.query(q);
         return rows;
@@ -47,18 +47,18 @@ export class SubjectModel {
     static async getSubject(sub_code) {
         const q = `
       SELECT 
-        s.sub_code, s.sub_name, s.teacher_id,
+        s.code, s.course_name, s.teacher_id,
         t.tname, t.abbr, t.dept
       FROM subjects s
       LEFT JOIN teachers t ON t.user_id = s.teacher_id
-      WHERE s.sub_code = $1 LIMIT 1;
+      WHERE s.code = $1 LIMIT 1;
     `;
-        const { rows } = await pool.query(q, [sub_code]);
+        const { rows } = await pool.query(q, [code]);
         return rows[0];
     }
 
     // UPDATE SUBJECT (INCLUDING TEACHER ASSIGNMENT)
-    static async updateSubject(sub_code, updates) {
+    static async updateSubject(code, updates) {
         const client = await pool.connect();
         try {
             await client.query("BEGIN");
@@ -76,10 +76,10 @@ export class SubjectModel {
             const q = `
         UPDATE subjects
         SET ${fields.join(", ")}
-        WHERE sub_code = $${i}
+        WHERE code = $${i}
         RETURNING *;
       `;
-            values.push(sub_code);
+            values.push(code);
 
             const { rows } = await client.query(q, values);
             await client.query("COMMIT");
@@ -94,11 +94,11 @@ export class SubjectModel {
     }
 
     // DELETE SUBJECT
-    static async deleteSubject(sub_code) {
+    static async deleteSubject(code) {
         const client = await pool.connect();
         try {
             await client.query("BEGIN");
-            await client.query("DELETE FROM subjects WHERE sub_code = $1", [sub_code]);
+            await client.query("DELETE FROM subjects WHERE code = $1", [code]);
             await client.query("COMMIT");
             return true;
         } catch (err) {

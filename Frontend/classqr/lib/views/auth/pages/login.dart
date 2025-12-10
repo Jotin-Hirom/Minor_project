@@ -8,7 +8,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../services/auth_services.dart';
 
 /// Riverpod provider MUST be outside the widget class
-final selectedRoleProvider = StateProvider<String>((ref) => 'Student');
+final selectedRoleProvider = StateProvider<String>((ref) => 'Student'); 
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -135,7 +135,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               BoxShadow(
                 color: Colors.black12,
                 blurRadius: 15,
-                offset: Offset(0, 6),
+                offset: Offset(0, 6), 
               ),
             ],
           ),

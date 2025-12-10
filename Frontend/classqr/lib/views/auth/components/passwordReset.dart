@@ -1,10 +1,7 @@
-
-
 import 'dart:convert';
-
 import 'package:classqr/core/config/env.dart';
-import 'package:classqr/views/auth/auth_page.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:toastification/toastification.dart';
 
@@ -91,10 +88,9 @@ void showNewPasswordDialog(BuildContext context, String email) {
                 return;
               }
 
-              bool ok = await resetPassword(email, newPass.text.trim());
-
+              final ok = await resetPassword(email, newPass.text.trim());
               if (ok) {
-                Navigator.pop(context); // close new password dialog
+                Navigator.of(context).pop(); // close new password dialog
                 toastification.show(
                   type: ToastificationType.success,
                   style: ToastificationStyle.flat,
@@ -103,10 +99,7 @@ void showNewPasswordDialog(BuildContext context, String email) {
                   title: Text("Your password is updated now."),
                   autoCloseDuration: const Duration(seconds: 5),
                 );
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AuthPage()),
-                );
+                context.go('/auth');
               } else {
                 toastification.show(
                   type: ToastificationType.error,

@@ -1,7 +1,8 @@
+import 'package:classqr/models/app_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:go_router/go_router.dart';
+import '../../providers/auth_provider.dart';
 import 'pages/login.dart';
 import 'pages/signup.dart';
 import 'pages/forgot_password.dart';
@@ -33,11 +34,39 @@ class AuthPage extends ConsumerWidget {
           child: Column(
             children: [
               TextButton(
-                onPressed: () {
-                  context.go('/home');
+                onPressed: () async {
+                  await ref
+                      .read(authStateProvider.notifier)
+                      .login(
+                        "student",
+                        User.fromJson({
+                          "id": "djsb364834",
+                          "email": "csm24006@tezu.ac.in",
+                          "password": "Demo@123",
+                          "role": "student",
+                        }),
+                        "skhdjhsdkh",
+                      );
                 },
-                child: const Text('goto Dashboard'),
+                child: const Text('STUDENT DASHBOARD'),
               ),
+              TextButton(
+                onPressed: () async {
+                  await ref
+                      .read(authStateProvider.notifier)
+                      .login(
+                        "teacher",
+                        User.fromJson({
+                          "id": "djsb364834",
+                          "email": "csm24006@tezu.ernet.in",
+                          "password": "Demo@123",
+                          "role": "teacher",
+                        }),
+                        "skhdjhsdkh",
+                      );
+                },
+                child: const Text('TEACHER DASHBOARD'),
+              ), 
               Padding(
                 padding: const EdgeInsets.all(15.0),
                 child: Row(
@@ -124,10 +153,6 @@ class AuthPage extends ConsumerWidget {
     );
   }
 }
-
-
-
-
 
 // import 'package:classqr/views/student/dashboard.dart';
 // import 'package:flutter/material.dart';

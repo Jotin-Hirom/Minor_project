@@ -7,7 +7,7 @@ import 'package:toastification/toastification.dart';
 import '../../../providers/otp_provider.dart';
 
 Future<void> showOtpDialog(
-  BuildContext parentContext,
+  BuildContext parentContext, 
   String email, 
   String from,
 ) async {
@@ -25,190 +25,185 @@ Future<void> showOtpDialog(
     context: parentContext,
     barrierDismissible: false,
     builder: (dialogContext) {
-      return ProviderScope(
-        overrides: [],
-        child: Consumer(
-          builder: (context, ref, _) {
-            final otpState = ref.watch(otpProvider);
-            final notifier = ref.read(otpProvider.notifier);
-
-            // --------------------------- VERIFY ---------------------------
-            Future<void> onVerify() async {
-              final otp = otpControllers.map((c) => c.text).join();
-
-              if (otp.length != 6) {
-                toastification.show(
-                  type: ToastificationType.error,
-                  context: parentContext,
-                   style: ToastificationStyle.flat,
-                  alignment: Alignment.topCenter,
-                  autoCloseDuration: const Duration(seconds: 5),
-                  title: const Text("Enter 6-digit OTP"),
-                );
-                return;
-              }
-
-              final ok = await notifier.verifyOTP(email, otp, from);
-
-              if (!ok) {
-                toastification.show(
-                  type: ToastificationType.error,
-                  context: parentContext,
-                  style: ToastificationStyle.flat,
-                  alignment: Alignment.topCenter,
-                  autoCloseDuration: const Duration(seconds: 5),
-                  title: Text(otpState.error ?? "OTP error"),
-                );
-                return;
-              }
-
-              // Close dialog safely
-              if (dialogContext.mounted) {
-                Navigator.of(dialogContext).pop();
-              }
-
-              disposeControllers();
-
+      return Consumer(
+        builder: (context, ref, _) {
+          final otpState = ref.watch(otpProvider);
+          final notifier = ref.read(otpProvider.notifier);
+      
+          // --------------------------- VERIFY ---------------------------
+          Future<void> onVerify() async {
+            final otp = otpControllers.map((c) => c.text).join();
+      
+            if (otp.length != 6) {
               toastification.show(
-                type: ToastificationType.success,
+                type: ToastificationType.error,
+                context: parentContext,
+                 style: ToastificationStyle.flat,
+                alignment: Alignment.topCenter,
+                autoCloseDuration: const Duration(seconds: 5),
+                title: const Text("Enter 6-digit OTP"),
+              );
+              return;
+            }
+      
+            final ok = await notifier.verifyOTP(email, otp, from);
+            if (!ok) {
+              toastification.show(
+                type: ToastificationType.error,
                 context: parentContext,
                 style: ToastificationStyle.flat,
                 alignment: Alignment.topCenter,
                 autoCloseDuration: const Duration(seconds: 5),
-                title: const Text("OTP Verified"),
+                title: Text(otpState.error ?? "OTP error"),
               );
-
-              await Future.delayed(const Duration(milliseconds: 120));
-
-              // ---------------- After OTP success navigate using GoRouter ----------------
-
-              if (!parentContext.mounted) return;
-
-              if (from == "forgotPassword") {
-                showNewPasswordDialog(parentContext, email);
-              } else {
-                // replace whole navigation stack → go to login/auth page
-                parentContext.go('/auth');
-              }
+              return;
             }
-
-            // --------------------------- RESEND ---------------------------
-            Future<void> onResend() async {
-              final ok = await notifier.resendOTP(email, from);
-
-              toastification.show(
-                type: ok
-                    ? ToastificationType.success
-                    : ToastificationType.error,
-                context: parentContext,
-                style: ToastificationStyle.flat,
-                alignment: Alignment.topCenter,
-                autoCloseDuration: const Duration(seconds: 5),
-                title: Text(ok ? "OTP Resent" : "Failed to resend"),
-              );
+      
+            // Close dialog safely
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop();
             }
-
-            // --------------------------- UI ---------------------------
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Center(
-                child: Text(
-                  (from == "signupStudent" || from == "signupTeacher")
-                      ? "Verify your Account"
-                      : "Reset your Password",
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+      
+      
+            toastification.show(
+              type: ToastificationType.success,
+              context: parentContext,
+              style: ToastificationStyle.flat,
+              alignment: Alignment.topCenter,
+              autoCloseDuration: const Duration(seconds: 5),
+              title: const Text("OTP Verified"),
+            );
+      
+            await Future.delayed(const Duration(milliseconds: 120));
+            disposeControllers();
+      
+            // ---------------- After OTP success navigate using GoRouter ----------------
+      
+            if (!parentContext.mounted) return;
+      
+            if (from == "forgotPassword") {
+              showNewPasswordDialog(parentContext, email);
+            } else {
+              parentContext.go('/auth');
+            }
+          }
+      
+          // --------------------------- RESEND ---------------------------
+          Future<void> onResend() async {
+            final ok = await notifier.resendOTP(email, from);
+      
+            toastification.show(
+              type: ok
+                  ? ToastificationType.success
+                  : ToastificationType.error,
+              context: parentContext,
+              style: ToastificationStyle.flat,
+              alignment: Alignment.topCenter,
+              autoCloseDuration: const Duration(seconds: 5),
+              title: Text(ok ? "OTP Resent" : "Failed to resend"),
+            );
+          }
+      
+          // --------------------------- UI ---------------------------
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Center(
+              child: Text(
+                (from == "signupStudent" || from == "signupTeacher")
+                    ? "Verify your Account"
+                    : "Reset your Password",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Enter the 6-digit OTP",
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // OTP INPUT
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(6, (i) {
-                      return SizedBox(
-                        width: 45,
-                        height: 55,
-                        child: TextField(
-                          controller: otpControllers[i],
-                          maxLength: 1,
-                          textAlign: TextAlign.center,
-                          keyboardType: TextInputType.number,
-                          onChanged: (v) {
-                            if (v.isNotEmpty && i < 5) {
-                              FocusScope.of(dialogContext).nextFocus();
-                            }
-                          },
-                          decoration: InputDecoration(
-                            counterText: "",
-                            filled: true,
-                            fillColor: Colors.grey.shade200,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                const Text(
+                  "Enter the 6-digit OTP",
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 20),
+      
+                // OTP INPUT
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(6, (i) {
+                    return SizedBox(
+                      width: 45,
+                      height: 55,
+                      child: TextField(
+                        controller: otpControllers[i],
+                        maxLength: 1,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) {
+                          if (v.isNotEmpty && i < 5) {
+                            FocusScope.of(dialogContext).nextFocus();
+                          }
+                        },
+                        decoration: InputDecoration(
+                          counterText: "",
+                          filled: true,
+                          fillColor: Colors.grey.shade200,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
                           ),
                         ),
-                      );
-                    }),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // RESEND OTP
-                  TextButton(
-                    onPressed: otpState.resending ? null : () => onResend(),
-                    child: Text(
-                      otpState.resending ? "Sending..." : "Resend OTP",
-                      style: const TextStyle(
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ),
-                ],
-              ),
-
-              actions: [
-                // CANCEL
-                TextButton(
-                  onPressed: () {
-                    disposeControllers();
-                    Navigator.of(dialogContext).pop();
-                  },
-                  child: const Text(
-                    "Cancel",
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
+                    );
+                  }),
                 ),
-
-                // VERIFY
-                ElevatedButton(
-                  onPressed: otpState.verifying ? null : () => onVerify(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                  ),
+      
+                const SizedBox(height: 14),
+      
+                // RESEND OTP
+                TextButton(
+                  onPressed: otpState.resending ? null : () => onResend(),
                   child: Text(
-                    otpState.verifying ? "Verifying..." : "Verify",
-                    style: const TextStyle(color: Colors.white),
+                    otpState.resending ? "Sending..." : "Resend OTP",
+                    style: const TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+      
+            actions: [
+              // CANCEL
+              TextButton(
+                onPressed: () {
+                  disposeControllers();
+                  Navigator.of(dialogContext).pop();
+                },
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+      
+              // VERIFY
+              ElevatedButton(
+                onPressed: otpState.verifying ? null : () => onVerify(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                ),
+                child: Text(
+                  otpState.verifying ? "Verifying..." : "Verify",
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        },
       );
     },
   );

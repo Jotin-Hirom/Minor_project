@@ -9,6 +9,6 @@ export const testConnection = async (pool) => {
     console.error("DB Connection Error:", err.message);
   } finally {
     // only release if client exists
-    if (client) client.release();
+    if (client) client.release(); 
   }
 }; 

@@ -14,7 +14,7 @@ const router = express.Router();
 
 
 //  FETCH DATA 
-router.get( 
+router.get(  
     "/students",
     auth,
     requireRole("admin"),

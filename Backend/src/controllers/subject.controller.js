@@ -24,14 +24,14 @@ export class SubjectController {
 
     static async create(req, res) {
         try {
-            const { sub_code, sub_name, teacher_id } = req.body;
+            const { code, course_name, teacher_id } = req.body;
 
-            if (!sub_code || !sub_name)
+            if (!code || !course_name)
                 return res.status(400).json({ error: "Missing required fields" });
 
             const subject = await SubjectModel.createSubject({
-                sub_code,
-                sub_name,
+                code,
+                course_name,
                 teacher_id,
             });
 

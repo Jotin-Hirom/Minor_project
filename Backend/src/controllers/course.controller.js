@@ -1,4 +1,4 @@
-import { CourseModel } from "../models/course.model.js";
+import { CourseModel } from "../models/course.model.js"; 
 
 export class CourseController {
 
@@ -34,33 +34,22 @@ export class CourseController {
     // ➤ CREATE COURSE
     static async create(req, res) {
         try {
-            const {
-                sub_code,
-                teacher_id,
-                semester,
-                programme,
-                batch,
-                year,
-                section
-            } = req.body;
+            const { code, teacher_id } = req.body;
 
-            if (!sub_code || !teacher_id || !semester || !programme || !batch) {
+            // Validate required fields
+            if (!code || !teacher_id) {
                 return res.status(400).json({
-                    error: "Missing required fields (sub_code, teacher_id, semester, programme, batch)"
+                    error: "Missing required fields (code, teacher_id)"
                 });
             }
 
             const course = await CourseModel.createCourse({
-                sub_code,
-                teacher_id,
-                semester,
-                programme,
-                batch,
-                year,
-                section
+                code,
+                teacher_id
             });
 
             res.status(201).json(course);
+
         } catch (err) {
             console.error("Error creating course:", err);
             res.status(500).json({ error: "Server error" });

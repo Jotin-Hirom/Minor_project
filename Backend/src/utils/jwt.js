@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 const JWT_EXPIRE = process.env.JWT_EXPIRE || "30m";
 const REFRESH_EXPIRE = process.env.REFRESH_EXPIRE || "3d";
-
+ 
 // Sign access token 
 export const signAccessToken = (payload) => {
   // payload: e.g. { sub: user_id, role, email }

@@ -49,31 +49,71 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
---SUBJECTS
+-- SUBJECTS (Master Catalog)
+
 CREATE TABLE IF NOT EXISTS subjects (
-    sub_code TEXT PRIMARY KEY,
-    sub_name TEXT NOT NULL,
-    teacher_id UUID REFERENCES users(user_id) ON DELETE SET NULL
+    code TEXT PRIMARY KEY,                 -- Subject code like CS101
+    course_name TEXT NOT NULL,             -- Human-readable name
+    teacher_id UUID REFERENCES teachers(user_id) 
+                ON DELETE SET NULL         -- Optional subject coordinator
 );
 
---COURSE OFFERINGS
+
+-- =====================================
+-- COURSE OFFERINGS (Actual Class Running)
+-- =====================================
 CREATE TABLE IF NOT EXISTS course_offerings (
     course_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sub_code TEXT REFERENCES subjects(sub_code) ON DELETE SET NULL,
-    teacher_id UUID REFERENCES teachers(user_id) ON DELETE SET NULL,
-    semester INT,
-    programme TEXT,
-    batch INT,
-    year INT,
+    -- Link this offering to a subject
+    code TEXT REFERENCES subjects(code)
+                ON DELETE SET NULL,
+    -- Teacher actually teaching this offering
+    teacher_id UUID REFERENCES teachers(user_id)
+                ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
---STUDENT ENROLLMENT
+
+-- ================================
+-- STUDENT ENROLLMENT IN OFFERINGS
+-- ================================
 CREATE TABLE IF NOT EXISTS student_enrollments (
     enrollment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID REFERENCES students(user_id),
-    course_id UUID REFERENCES course_offerings(course_id),
+
+    -- Which student?
+    student_id UUID REFERENCES students(user_id)
+                ON DELETE CASCADE,
+
+    -- Enrolled in which course offering?
+    course_id UUID REFERENCES course_offerings(course_id)
+                ON DELETE CASCADE,
+
+    -- Prevent a student from joining the same course twice
     UNIQUE(student_id, course_id)
+);
+
+CREATE TABLE IF NOT EXISTS attendance (
+    attendance_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Which student?
+    student_id UUID REFERENCES students(user_id)
+                ON DELETE CASCADE,
+
+    -- Which course offering?
+    course_id UUID REFERENCES course_offerings(course_id)
+                ON DELETE CASCADE,
+
+    -- Attendance date
+    attendance_date DATE NOT NULL,
+
+    -- Present or Absent
+    present BOOLEAN NOT NULL,
+
+    -- Timestamp
+    created_at TIMESTAMP DEFAULT NOW(),
+
+    -- Prevent duplicate attendance for the same student on same date for the same course
+    UNIQUE(student_id, course_id, attendance_date)
 );
 
 --QR SESSION

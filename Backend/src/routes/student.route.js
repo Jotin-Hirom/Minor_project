@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { getSubjects, getStudentAttendance } from "../controllers/studentController.js";
 import { auth } from "../middlewares/auth.middleware.js";
 import { StudentController } from "../controllers/student.controller.js";
 import { adminOnly, studentExists } from "../middlewares/student.middleware.js";

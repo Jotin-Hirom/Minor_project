@@ -5,9 +5,8 @@ import { auth, requireRole } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 // ADMIN ONLY
-const adminOnly = [auth, requireRole("admin")];
+const adminOnly = [auth, requireRole("admin","teacher","student")];
 
-/** ADMIN ROUTES */
 router.get("/", adminOnly, CourseController.getAll);
 router.get("/:id", adminOnly, CourseController.getOne);
 router.post("/", adminOnly, CourseController.create);

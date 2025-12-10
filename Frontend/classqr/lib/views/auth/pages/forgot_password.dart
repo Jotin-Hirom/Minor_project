@@ -5,7 +5,6 @@ import 'package:toastification/toastification.dart';
 import '../../../services/auth_services.dart';
 import '../components/otpDialog.dart';
 
-
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
   @override
@@ -44,8 +43,8 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         emailController.text.trim().toLowerCase(),
         'forgotPassword',
       );
-    } else if (status == 503){
-        toastification.show(
+    } else if (status == 503) {
+      toastification.show(
         type: ToastificationType.error,
         style: ToastificationStyle.flat,
         alignment: Alignment.topCenter,
@@ -53,8 +52,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
         title: const Text("Server error."),
         autoCloseDuration: const Duration(seconds: 3),
       );
-    } 
-    else {
+    } else {
       toastification.show(
         type: ToastificationType.error,
         style: ToastificationStyle.flat,
@@ -125,10 +123,19 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 const SizedBox(height: 25),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     onPressed: _sendOtp,
-                    child: const Text('Send OTP'),
+                    child: const Text(
+                      'Send OTP',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
                   ),
                 ),
               ],

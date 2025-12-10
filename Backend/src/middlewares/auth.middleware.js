@@ -10,7 +10,6 @@ export async function auth(req, res, next) {
   if (!token) return res.status(401).json({ error: "Invalid token" });
   try {
     const payload = verifyAccessToken(token);
-    console.log(payload);
 
     req.user = payload;
     next();  
@@ -32,6 +31,7 @@ export function requireRole(...allowedRoles) {
       }
 
       const userRole = req.user.role;
+      console.log("User role:", userRole);
 
       // Check if user's role matches allowed roles
       if (!allowedRoles.includes(userRole)) {

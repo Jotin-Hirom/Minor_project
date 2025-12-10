@@ -6,6 +6,8 @@ import teacherRoutes from "./teacher.route.js";
 import adminRoutes from "./admin.route.js";
 import subjectRoutes from "./subject.route.js";
 import courseRoutes from "./course.route.js";
+import enrollmentRoutes from "./enrollment.route.js";
+import attendanceRoutes from "./attendance.route.js";
 
 import { auth, requireRole } from "../middlewares/auth.middleware.js";
 
@@ -22,7 +24,7 @@ router.use("/auth", authRoutes); // login, signup, refresh, logout
 // ------------------------------------------
 router.use(
   "/student",
-  auth,                 // Must be logged in
+  auth,
   requireRole("student"),
   studentRoutes
 );
@@ -51,15 +53,14 @@ router.use(
 
 
 // ------------------------------------------
-// SUBJECT ROUTES (Admin-only protected)
+// SUBJECT ROUTES (admin, teacher, student)
 // ------------------------------------------
 router.use(
   "/subject",
   auth,
-  requireRole("admin"),
+  requireRole("admin", "teacher", "student"),
   subjectRoutes
 );
-
 
 
 // ------------------------------------------
@@ -73,50 +74,39 @@ router.use(
 );
 
 
+// ------------------------------------------
+// ENROLLMENT ROUTES (teacher + admin)
+// Teachers enroll students into their course,
+// Admins can also manage enrollment.
+// ------------------------------------------
+router.use(
+  "/enrollment",
+  auth,
+  requireRole("teacher", "admin"),
+  enrollmentRoutes
+);
+
 
 // ------------------------------------------
-// GENERAL AUTHENTICATED ROUTE
+// ATTENDANCE ROUTES 
+// - Teacher marks attendance
+// - Student can view their attendance summary
+// ------------------------------------------
+
+// Teacher: mark + view course-level attendance
+router.use(
+  "/attendance",
+  auth,
+  requireRole("teacher", "student", "admin"),
+  attendanceRoutes
+);
+
+
+// ------------------------------------------
+// GENERAL AUTHENTICATED ROUTE (who am I?)
 // ------------------------------------------
 router.get("/me", auth, (req, res) => {
   res.json({ user: req.user });
 });
 
 export default router;
-
-
-// import express from "express";
-// import authRoutes from "./auth.routes.js";
-// import studentRoutes from "./student.routes.js";
-// import adminRoutes from "./admin.routes.js";
-// import { auth } from "../middlewares/auth.middleware.js";
-// // import teacherRoutes from "./teacher.routes.js";
-// // import attendanceRoutes from "./attendance.routes.js";
-// // import userRoutes from "./user.routes.js";
-// // import { verifyToken } from "../middlewares/auth.middleware.js";
-
-// const router = express.Router();
-
-// // All API base routes
-// router.use("/auth", authRoutes);
-// router.use("/student", auth, studentRoutes); 
-// router.use("/admin", auth, adminRoutes); 
-// router.get(
-//   "/student",
-//   auth,
-//   requireRole("student"),
-//   studentRoutes
-// );
-// // router.get(
-// //     "/api/reports",
-// //     requireAuth,
-// //     requireRole("admin", "teacher"),
-// //     reportsController
-// // );
-// // router.use("/teacher",auth, teacherRoutes);
-
-// // Me endpoint -> get current user info
-// router.get("/me", auth, (req, res) => {
-//   res.json({ user: req.user });
-// });
-
-// export default router;

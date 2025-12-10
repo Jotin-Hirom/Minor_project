@@ -19,4 +19,4 @@ router.put("/:id", adminOnlyTeacher, teacherExists, TeacherController.update);
 // ADMIN — DELETE teacher
 router.delete("/:id", adminOnlyTeacher, teacherExists, TeacherController.delete);
 
-export default router;
+export default router; 

@@ -60,7 +60,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     await prefs.setString('user', jsonEncode(user.toJson()));
     state = AuthState(
       isLoggedIn: true,
-      token: token,
+      token: token, 
       role: role,
       user: user,
     );

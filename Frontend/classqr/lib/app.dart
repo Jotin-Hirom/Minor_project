@@ -1,3 +1,5 @@
+import 'package:classqr/views/student/stu.dart';
+import 'package:classqr/views/teacher/pages/select_subject.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +43,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'teacher_home',
         builder: (context, state) {
           final a = ref.read(authStateProvider);
-          return TeacherDashboard(user: a.user);
+          return TeacherDashboard(token: a.token, user: a.user);
+        },
+      ),
+      GoRoute(
+        path: '/teacher/select-subjects',
+        name: 'teacher_select_subjects',
+        builder: (context, state) {
+          return const SelectSubjectsPage();
         },
       ),
       // GoRoute(

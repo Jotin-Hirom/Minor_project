@@ -27,9 +27,18 @@ class StudentDashboard extends ConsumerWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+          onPressed: () {
+            // _openQrScanDialog();
+          },
+          child: const Icon(Icons.qr_code_scanner, size: 28),
+        ),
+
         backgroundColor: const Color(0xFFF5F7FA),
         appBar: AppBar(
-          title: const Text("Student Dashboard"),
+          title: const Text("ClassQR - Student Dashboard"),
           backgroundColor: Colors.indigo,
           foregroundColor: Colors.white,
           bottom: const TabBar(
@@ -89,10 +98,11 @@ class StudentDashboard extends ConsumerWidget {
               child: Icon(
                 CupertinoIcons.square_arrow_right,
                 size: 30.0,
-                color: CupertinoColors.systemRed, // Or any other color
+                color: CupertinoColors.white, // Or any other color
               ),
             ),
           ],
+       
         ),
         body: TabBarView(
           children: [
