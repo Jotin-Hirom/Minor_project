@@ -15,11 +15,12 @@ export async function auth(req, res, next) {
     next();  
   } catch {
     res.status(401).json({ error: "Unauthorized Token." });
-  }  
-  const user =await UserModel.getUserById(req.user.id);
+  }
+  const user = await UserModel.getUserById(req.user.id);
   if (!user) {
     return res.status(401).json({ error: "User does not exist" });
   }
+
 }
 
 export function requireRole(...allowedRoles) {
@@ -31,7 +32,6 @@ export function requireRole(...allowedRoles) {
       }
 
       const userRole = req.user.role;
-      console.log("User role:", userRole);
 
       // Check if user's role matches allowed roles
       if (!allowedRoles.includes(userRole)) {
@@ -39,7 +39,6 @@ export function requireRole(...allowedRoles) {
           error: "Access denied. Insufficient permissions.",
         });
       }
-
       next();
     } catch (err) {
       console.error("Role middleware error:", err);

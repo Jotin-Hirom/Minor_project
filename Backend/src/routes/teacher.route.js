@@ -19,4 +19,6 @@ router.put("/:id", adminOnlyTeacher, teacherExists, TeacherController.update);
 // ADMIN — DELETE teacher
 router.delete("/:id", adminOnlyTeacher, teacherExists, TeacherController.delete);
 
+//Fetch teacher subjects
+
 export default router; 

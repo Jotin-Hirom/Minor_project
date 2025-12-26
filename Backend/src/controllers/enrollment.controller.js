@@ -2,6 +2,31 @@ import { EnrollmentModel } from "../models/enrollment.model.js";
 
 export class EnrollmentController {
 
+    static async bulkEnroll(req, res) {
+    try {
+        const { course_id, student_ids } = req.body;
+
+        if (!course_id || !Array.isArray(student_ids) || student_ids.length === 0) {
+            return res.status(400).json({
+                error: "Provide course_id and non-empty student_ids array"
+            });
+        }
+
+        const result = await EnrollmentModel.bulkEnrollStudents(course_id, student_ids);
+
+        res.json({
+            success: true,
+            message: "Students enrolled successfully",
+            enrolled: result
+        });
+
+    } catch (err) {
+        console.error("Bulk enrollment error:", err);
+        return res.status(500).json({ error: "Server error" });
+    }
+}
+
+
     // ➤ ENROLL (POST)
     static async enroll(req, res) {
         try {
@@ -33,7 +58,7 @@ export class EnrollmentController {
             console.error("Error enrolling student:", err);
             res.status(500).json({ error: "Server error" });
         }
-    }
+    } 
 
     // ➤ GET ALL ENROLLMENTS IN A COURSE
     static async getByCourse(req, res) {

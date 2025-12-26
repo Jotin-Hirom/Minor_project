@@ -4,14 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-
 // Loads subject list
-final allSubjectsProvider = FutureProvider<List<Subject>>((ref) async {
+final allSubjectsProvider = FutureProvider<List<Course>>((ref) async {
   final jsonStr = await rootBundle.loadString('assets/subjects/subject.json');
   final Map<String, dynamic> data = jsonDecode(jsonStr);
   final List items = data['subjects'];
 
-  return items.map((e) => Subject.fromJson(e)).toList();
+  return items.map((e) => Course.fromJson(e)).toList();
 });
 
 // Holds search text

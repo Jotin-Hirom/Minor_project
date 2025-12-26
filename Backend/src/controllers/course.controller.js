@@ -2,6 +2,19 @@ import { CourseModel } from "../models/course.model.js";
 
 export class CourseController {
 
+    // ➤ GET COURSES BY CODE
+    static async getCoursesByCode(req, res) {
+        try {
+            const { code } = req.params;
+            const courses = await CourseModel.getCoursesByCode(code);
+
+            res.json(courses);
+        } catch (err) {
+            console.error("Error fetching courses by code:", err);
+            return res.status(500).json({ error: "Server error" });
+        }
+    }
+
     // ➤ GET ALL COURSES
     static async getAll(req, res) {
         try {

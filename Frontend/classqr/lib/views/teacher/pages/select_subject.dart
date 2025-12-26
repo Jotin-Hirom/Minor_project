@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:toastification/toastification.dart';
 
+import '../../../core/config/env.dart';
 import '../../../models/subject.dart';
+import '../../../providers/auth_provider.dart';
 import '../../../providers/subject_provider.dart';
 import '../../../providers/teacher_selected_subject.dart';
 
@@ -16,12 +20,19 @@ class SelectSubjectsPage extends ConsumerStatefulWidget {
 }
 
 class _SelectSubjectsPageState extends ConsumerState<SelectSubjectsPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _subCodeController = TextEditingController();
+  final TextEditingController _subNameController = TextEditingController();
+  bool _isCreating = false;
+
   String searchQuery = "";
   Timer? _debounce;
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _subCodeController.dispose();
+    _subNameController.dispose();
     super.dispose();
   }
 
@@ -35,8 +46,80 @@ class _SelectSubjectsPageState extends ConsumerState<SelectSubjectsPage> {
     });
   }
 
+  Future<void> createSubject() async {
+    final auth = ref.read(authStateProvider);
+    final subjects = ref.watch(teacherSelectedSubjectsProvider);
+    // For now, just log and show an informational toast; implement POST logic later.
+    try {
+      print('role: ${auth.role}');
+      print('selected subjects: ${subjects.map((s) => s.code).toList()}');
+
+      toastification.show(
+        type: ToastificationType.info,
+        context: context,
+        alignment: Alignment.topCenter,
+        title: const Text("Create subject not implemented"),
+        autoCloseDuration: const Duration(seconds: 3),
+      );
+
+      // Close the dialog if it was opened
+      if (Navigator.canPop(context)) Navigator.pop(context);
+    } catch (e) {
+      _error("Something went wrong: $e");
+    }
+  }
+
+  void _error(String msg) {
+    toastification.show(
+      type: ToastificationType.error,
+      context: context,
+      alignment: Alignment.topCenter,
+      title: Text(msg),
+    );
+  }
+
+  void _openCreateSubjectDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Create Subject"),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _subCodeController,
+                decoration: const InputDecoration(labelText: "Subject Code"),
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _subNameController,
+                decoration: const InputDecoration(labelText: "Subject Name"),
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(onPressed: createSubject, child: const Text("Create")),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authStateProvider);
+    final user = auth.user;
+    if (user == null) {
+      return const Center(child: Text("User not authenticated"));
+    }
     final selected = ref.watch(teacherSelectedSubjectsProvider);
     final sortMode = ref.watch(subjectSortProvider);
     final asyncSubjects = ref.watch(allSubjectsProvider);
@@ -47,6 +130,11 @@ class _SelectSubjectsPageState extends ConsumerState<SelectSubjectsPage> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: "Create Course",
+            onPressed: _openCreateSubjectDialog,
+          ),
           PopupMenuButton<String>(
             onSelected: (v) => ref.read(subjectSortProvider.notifier).state = v,
             itemBuilder: (_) => const [
@@ -63,7 +151,7 @@ class _SelectSubjectsPageState extends ConsumerState<SelectSubjectsPage> {
         error: (e, _) => Center(child: Text("Error loading subjects")),
         data: (subjects) {
           // ---------- FILTER ----------
-          List<Subject> filtered = subjects.where((s) {
+          List<Course> filtered = subjects.where((s) {
             if (searchQuery.isEmpty) return true;
             return s.code.toLowerCase().contains(searchQuery) ||
                 s.courseName.toLowerCase().contains(searchQuery);
@@ -157,15 +245,17 @@ class _SelectSubjectsPageState extends ConsumerState<SelectSubjectsPage> {
                     ),
                   ),
                   onPressed: () {
-                    toastification.show(
-                      type: ToastificationType.success,
-                      style: ToastificationStyle.flat,
-                      alignment: Alignment.topCenter,
-                      context: context,
-                      title: const Text("Subjects Created"),
-                      autoCloseDuration: const Duration(seconds: 5),
-                    );
-                    context.go("/teacher");
+                    createSubject();
+
+                    // toastification.show(
+                    //   type: ToastificationType.success,
+                    //   style: ToastificationStyle.flat,
+                    //   alignment: Alignment.topCenter,
+                    //   context: context,
+                    //   title: const Text("Subjects Created"),
+                    //   autoCloseDuration: const Duration(seconds: 5),
+                    // );
+                    // context.go("/teacher");
                   },
                   child: const Text("Create", textAlign: TextAlign.center),
                 ),

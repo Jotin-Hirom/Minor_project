@@ -10,7 +10,7 @@ export async function createUserWithStudent(userData, studentData) {
     try {
         await client.query("BEGIN");
 
-        // CREATE USER  
+        // CREATE USER   
         const userInsert = `
             INSERT INTO users (email, password_hash, role)
             VALUES ($1, $2, $3)

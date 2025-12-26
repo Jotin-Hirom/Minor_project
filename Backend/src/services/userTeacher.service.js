@@ -8,7 +8,7 @@ export async function createUserWithTeacher(userData, teacherData) {
     try {
         await client.query("BEGIN"); 
 
-        // Create user
+        // Create user 
         const userQuery = `
             INSERT INTO users (email, password_hash, role)
             VALUES ($1, $2, $3)
@@ -42,8 +42,6 @@ export async function createUserWithTeacher(userData, teacherData) {
 
         const teacher = teacherRows[0];
         await client.query("COMMIT");
-
-        await client.query("BEGIN");
 
             // generate OTP & expiry (10 minutes)
             const otp = generateOTP();

@@ -23,4 +23,4 @@ export async function studentExists(req, res, next) {
 }
 
 // Only admin can modify student records
-export const adminOnly = [auth, requireRole("admin")];
+export const adminTeacherOnly = [auth, requireRole("admin", "teacher")];

@@ -48,6 +48,26 @@ export class CourseModel {
         return rows;
     }
 
+    //GET BY CODE
+    static async getCoursesByCode(code) {
+        const q = `
+            SELECT 
+                c.*,
+                s.course_name AS subject_name,
+                t.tname AS teacher_name,
+                t.abbr AS teacher_abbr,
+                t.dept AS teacher_dept
+            FROM course_offerings c
+            LEFT JOIN subjects s ON c.code = s.code
+            LEFT JOIN teachers t ON c.teacher_id = t.user_id
+            WHERE c.code = $1
+            ORDER BY c.created_at DESC;
+        `;
+
+        const { rows } = await pool.query(q, [code]);
+        return rows;
+    }
+
     // ➤ GET ONE COURSE
     static async getCourseById(course_id) {
         const q = `

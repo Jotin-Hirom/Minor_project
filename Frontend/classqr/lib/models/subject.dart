@@ -1,16 +1,25 @@
-class Subject {
+class Course {
   final String code;
   final String courseName;
+  final String course_id;
 
-  Subject({required this.code, required this.courseName});
+  Course({
+    required this.code,
+    required this.courseName,
+    required this.course_id,
+  });
 
   // Convert JSON -> Dart object
-  factory Subject.fromJson(Map<String, dynamic> json) {
-    return Subject(code: json['code'], courseName: json['course_name']);
+  factory Course.fromJson(Map<String, dynamic> json) {
+    return Course(
+      code: json['code'],
+      courseName: json['course_name'],
+      course_id: json['course_id'],
+    );
   }
 
   // Convert Dart object -> JSON (optional)
   Map<String, dynamic> toJson() {
-    return {'code': code, 'course_name': courseName};
+    return {'course_id': course_id, 'code': code, 'course_name': courseName};
   }
 }

@@ -1,39 +1,49 @@
-class Student {
-  final String id;
+class StudentModel {
+  final String userId;
+  final String rollNo;
   final String name;
-  final String email;
-  final String roll;
+  final int semester;
   final String programme;
-  final String semester;
-  final String profileImageUrl;
+  final int batch;
+  final String? photoUrl;
+  final bool isBlocked;
 
-  Student({
-    required this.id,
+  StudentModel({
+    required this.userId,
+    required this.rollNo,
     required this.name,
-    required this.email,
-    required this.roll,
-    required this.programme,
     required this.semester,
-    required this.profileImageUrl,
+    required this.programme,
+    required this.batch,
+    this.photoUrl,
+    required this.isBlocked,
   });
 
-  factory Student.fromJson(Map<String, dynamic> j) => Student(
-        id: j['id'].toString(),
-        name: j['name'] ?? '',
-        email: j['email'] ?? '',
-        roll: j['roll_no'] ?? '',
-        programme: j['programme'] ?? '',
-        semester: j['semester']?.toString() ?? '',
-        profileImageUrl: j['profile_image_url']?.toString() ?? '',
-      );
+  /// FROM JSON
+  factory StudentModel.fromJson(Map<String, dynamic> json) {
+    return StudentModel(
+      userId: json['user_id'] as String,
+      rollNo: json['roll_no'] as String,
+      name: json['sname'] as String,
+      semester: json['semester'] as int,
+      programme: json['programme'] as String,
+      batch: json['batch'] as int,
+      photoUrl: json['photo_url'],
+      isBlocked: json['isblocked'] as bool,
+    );
+  }
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'roll_no': roll,
-        'programme': programme,
-        'semester': semester,
-        'profile_image_url': profileImageUrl,
-      };
+  /// TO JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'roll_no': rollNo,
+      'sname': name,
+      'semester': semester,
+      'programme': programme,
+      'batch': batch,
+      'photo_url': photoUrl,
+      'isblocked': isBlocked,
+    };
+  }
 }

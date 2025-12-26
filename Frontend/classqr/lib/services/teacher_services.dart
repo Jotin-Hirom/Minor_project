@@ -4,10 +4,11 @@ import '../models/subject.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
 import '../core/config/env.dart';
+import '../views/student/stu.dart' hide Subject;
 
 class TeacherService {
   // Load subjects from subject.json or from backend
-  static Future<List<Subject>> loadSubjects() async {
+  static Future<List<Course>> loadSubjects() async {
     // You can fetch from assets (subject.json) or call backend: GET /api/subjects/teacher/{teacherId}
     // Example: final res = await http.get(Uri.parse('${Env.apiBaseUrl}/api/subjects'));
     // Here we return empty list as placeholder
@@ -29,7 +30,7 @@ class TeacherService {
     );
     if (res.statusCode == 200) {
       final body = jsonDecode(res.body) as List;
-      return body.map((e) => Student.fromJson(e)).toList();
+      // return body.map((e) => Student.fromJson(e)).toList();
     }
     return [];
   }

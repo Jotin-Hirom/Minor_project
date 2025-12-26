@@ -3,6 +3,7 @@ import '../models/subject.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
 import '../services/teacher_services.dart';
+import '../views/student/stu.dart';
 
 final subjectsProvider = StateNotifierProvider<SubjectsNotifier, List<Subject>>(
   (ref) => SubjectsNotifier(),
@@ -20,7 +21,7 @@ class SubjectsNotifier extends StateNotifier<List<Subject>> {
 
   Future<void> load() async {
     final s = await TeacherService.loadSubjects();
-    state = s;
+    state = s.cast<Subject>();
   }
 }
 
@@ -56,9 +57,9 @@ class StudentsNotifier extends StateNotifier<List<Student>> {
       subjectId: subjectId,
       studentId: studentId,
     );
-    if (ok) {
-      state = state.where((s) => s.id != studentId).toList();
-    }
+    // if (ok) {
+    //   state = state.where((s) => s. != studentId).toList();
+    // }
     return ok;
   }
 }

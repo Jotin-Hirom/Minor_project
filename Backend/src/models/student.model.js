@@ -2,6 +2,25 @@ import pool from "../config/pool.js";
 
 export class StudentModel {
 
+    static async getStudentsBySemesterAndProgramme(semester, programme) {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+            const q = `
+                SELECT * FROM students
+                WHERE semester = $1 AND programme = $2
+            `;
+            const { rows } = await client.query(q, [semester, programme]);
+            await client.query("COMMIT");
+            return rows;
+        } catch (error) {
+            await client.query("ROLLBACK");
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
     static async getAllStudents() {
         const client = await pool.connect();
         try {

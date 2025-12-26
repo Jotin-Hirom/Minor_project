@@ -5,16 +5,18 @@ import { auth } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 // MARK (or update) ATTENDANCE
-router.post("/mark", auth, AttendanceController.mark);
+router.post("/mark", AttendanceController.mark);
+
+router.post("/init/:course_id", AttendanceController.initializeAttendance);
 
 // GET ATTENDANCE FOR A STUDENT IN A COURSE
-router.get("/student/:student_id/course/:course_id", auth, AttendanceController.getForStudent);
+router.get("/student/:student_id/course/:course_id", AttendanceController.getForStudent);
 
 // GET FULL COURSE ATTENDANCE
-router.get("/course/:course_id", auth, AttendanceController.getForCourse); 
+router.get("/course/:course_id", AttendanceController.getForCourse); 
 
 // DELETE ATTENDANCE RECORD
-router.delete("/:attendance_id", auth, AttendanceController.delete);
+router.delete("/:attendance_id", AttendanceController.delete);
 
 // ATTENDANCE SUMMARY for a student in a course
 router.get(

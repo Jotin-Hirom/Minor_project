@@ -51,7 +51,7 @@ class OtpNotifier extends StateNotifier<OtpState> {
 
     try {
       final response = await http.post(
-        url,
+        url, 
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "otp": otp}),
       );

@@ -2,6 +2,34 @@ import pool from "../config/pool.js";
 
 export class AttendanceModel {
 
+    static async getHistory(req, res) {
+    const { student_id } = req.params;
+
+    const { rows } = await pool.query(`
+        SELECT attendance_date, present
+        FROM attendance
+        WHERE student_id = $1
+        ORDER BY attendance_date;
+    `, [student_id]);
+
+    res.json(rows);
+}
+
+
+    static async markAllPresent(req, res) {
+    const { course_id } = req.body;
+
+    await pool.query(`
+        UPDATE attendance
+        SET present = TRUE
+        WHERE course_id = $1
+          AND attendance_date = CURRENT_DATE;
+    `, [course_id]);
+
+    res.json({ success: true });
+}
+
+
     // ➤ MARK ATTENDANCE
     static async markAttendance({ student_id, course_id, attendance_date, present }) {
         const client = await pool.connect();
@@ -31,6 +59,18 @@ export class AttendanceModel {
         }
     }
 
+    static async initAttendance(course_id) {
+    await pool.query(`
+        INSERT INTO attendance (student_id, course_id, attendance_date, present)
+        SELECT student_id, course_id, CURRENT_DATE, FALSE
+        FROM student_enrollments
+        WHERE course_id = $1
+        ON CONFLICT (student_id, course_id, attendance_date)
+        DO NOTHING;
+    `, [course_id]);
+}
+
+
     // ➤ GET ATTENDANCE FOR ONE STUDENT IN ONE COURSE
     static async getStudentAttendance(student_id, course_id) {
         const q = `
@@ -43,17 +83,19 @@ export class AttendanceModel {
         return rows;
     }
 
-    // ➤ GET FULL ATTENDANCE LIST FOR A COURSE
+    // GET FULL ATTENDANCE LIST FOR A COURSE
     static async getCourseAttendance(course_id) {
         const q = `
-            SELECT 
-                a.*, 
-                s.sname AS student_name,
-                s.roll_no
-            FROM attendance a
-            JOIN students s ON a.student_id = s.user_id
-            WHERE a.course_id = $1
-            ORDER BY a.attendance_date ASC, s.sname ASC;
+               SELECT
+            st.user_id,
+            st.roll_no,
+            st.sname,
+            a.present
+        FROM attendance a
+        JOIN students st ON a.student_id = st.user_id
+        WHERE a.course_id = $1
+          AND a.attendance_date = CURRENT_DATE
+        ORDER BY st.roll_no;
         `;
         const { rows } = await pool.query(q, [course_id]);
         return rows;

@@ -49,25 +49,9 @@ class SubjectsTab extends ConsumerWidget {
     ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        SizedBox(
-          width: 120, // your desired width
-          height: 40,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero, // required for strict width
-              backgroundColor: Colors.indigo,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () => context.go("/teacher/select-subjects"),
-            child: const Text("Create Subject", textAlign: TextAlign.center),
-          ),
-        ),
         const SizedBox(height: 15),
         const Text(
-          "Teaching Subjects",
+          "Enrolled Subjects",
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         ...(subjects.isEmpty
@@ -88,7 +72,7 @@ class SubjectsTab extends ConsumerWidget {
                   ),
                   child: const Center(
                     child: Text(
-                      "No subjects to be taught.\nPlease choose subjects first.",
+                      "No subjects to be found.\nPlease enroll the subjects first.",
                       style: TextStyle(fontSize: 16, color: Colors.black),
                       textAlign: TextAlign.center,
                     ),
@@ -151,7 +135,9 @@ class SubjectsTab extends ConsumerWidget {
                               context: context,
                               builder: (context) => AlertDialog(
                                 title: Text('${c.courseName} Options'),
-                                content: const Text('More options can be added here.'),
+                                content: const Text(
+                                  'More options can be added here.',
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () {

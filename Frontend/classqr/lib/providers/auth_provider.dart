@@ -7,7 +7,7 @@ final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>((
   ref,
 ) {
   return AuthStateNotifier()..loadUserFromLocal();
-});
+}); 
 
 class AuthState {
   final bool isLoggedIn;
@@ -64,11 +64,50 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       role: role,
       user: user,
     );
-  }
+  } 
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     state = const AuthState(isLoggedIn: false, token: '');
   } 
+
+  /// Updates only the token in both SharedPreferences and provider state.
+  Future<void> updateToken(String newToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('accessToken', newToken);
+
+    state = state.copyWith(token: newToken);
+  }
+
+  /// Alias: Some codebases use setToken() naming.
+  Future<void> setToken(String newToken) async {
+    await updateToken(newToken);
+  }
+
+  /// When backend returns a new token but user + role already exist.
+  /// It loads role & user from SharedPreferences and only replaces token.
+  Future<void> loginWithToken(String newToken) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final role = prefs.getString('role');
+    final userStr = prefs.getString('user');
+
+    if (role == null || userStr == null) {
+      // If something is missing, fallback to a simple updateToken only.
+      return updateToken(newToken);
+    }
+
+    final user = User.fromJson(jsonDecode(userStr));
+
+    await prefs.setString('accessToken', newToken);
+
+    state = AuthState(
+      isLoggedIn: true,
+      token: newToken,
+      role: role,
+      user: user,
+    );
+  }
+
 }

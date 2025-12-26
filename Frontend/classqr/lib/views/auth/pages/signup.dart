@@ -5,7 +5,8 @@ import 'package:toastification/toastification.dart';
 
 import '../../../providers/dept_provider.dart';
 import '../../../services/auth_services.dart';
-import '../components/otpDialog.dart';
+import '../../../components/otpDialog.dart';
+import '../../../components/programme_dropdown.dart';
 
 final signupSelectedRoleProvider = StateProvider<String>((ref) => 'Student');
 
@@ -392,7 +393,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             keyboard: TextInputType.number,
           ),
           const SizedBox(height: 12),
-          field(programme, "Programme", validateProgramme),
+          ProgrammeDropdown(),
           const SizedBox(height: 12),
           field(
             batch,
@@ -461,7 +462,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           const SizedBox(height: 12),
 
           /// DEPARTMENT
-          DropdownButtonFormField<String>( 
+          DropdownButtonFormField<String>(
             initialValue: selectedDept,
             decoration: fieldStyle("Select Department"),
             items: departments

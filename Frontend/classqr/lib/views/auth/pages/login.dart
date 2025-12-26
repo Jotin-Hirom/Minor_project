@@ -8,7 +8,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../services/auth_services.dart';
 
 /// Riverpod provider MUST be outside the widget class
-final selectedRoleProvider = StateProvider<String>((ref) => 'Student'); 
+final selectedRoleProvider = StateProvider<String>((ref) => 'Student');
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -97,6 +97,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         title: const Text("Server error."),
         autoCloseDuration: const Duration(seconds: 3),
       );
+    } else if (status == 401) {
+      toastification.show(
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        alignment: Alignment.topCenter,
+        context: context,
+        title: const Text("Invalid credentials."),
+        autoCloseDuration: const Duration(seconds: 3),
+      );
     } else {
       toastification.show(
         type: ToastificationType.error,
@@ -118,8 +127,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       filled: true,
       fillColor: Colors.grey.shade100,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(12)
       ),
     );
 
@@ -135,7 +143,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               BoxShadow(
                 color: Colors.black12,
                 blurRadius: 15,
-                offset: Offset(0, 6), 
+                offset: Offset(0, 6),
               ),
             ],
           ),
@@ -156,7 +164,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
                 // ------------------- FIXED DROPDOWN -------------------
                 DropdownButtonFormField<String>(
-                  initialValue: selectedRole, // correct binding
+                  initialValue: selectedRole,
                   decoration: fieldStyle('Select Role'),
                   items: ['Admin', 'Student', 'Teacher']
                       .map((r) => DropdownMenuItem(value: r, child: Text(r)))
@@ -174,13 +182,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   controller: emailController,
                   validator: validateEmail,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.email_outlined),
+                    prefixIcon: const Icon(Icons.email),
                     hintText: '@tezu.ac.in or @tezu.ernet.in',
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
@@ -194,13 +201,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   controller: passwordController,
                   validator: validatePassword,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock),
                     hintText: 'Enter your password',
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),

@@ -7,7 +7,7 @@ class AttendanceTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final attended = 42;
+    final attended = 23;
     final total = 50;
     final percentage = (attended / total) * 100;
 

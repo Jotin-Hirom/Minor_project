@@ -25,7 +25,7 @@ router.use("/auth", authRoutes); // login, signup, refresh, logout
 router.use(
   "/student",
   auth,
-  requireRole("student"),
+  requireRole("student", "admin", "teacher"),
   studentRoutes
 );
 
@@ -36,7 +36,7 @@ router.use(
 router.use(
   "/teacher",
   auth,
-  requireRole("teacher"),
+  requireRole("teacher", "admin"),
   teacherRoutes
 );
 
@@ -58,7 +58,7 @@ router.use(
 router.use(
   "/subject",
   auth,
-  requireRole("admin", "teacher", "student"),
+  requireRole("admin", "teacher"),
   subjectRoutes
 );
 
@@ -69,7 +69,7 @@ router.use(
 router.use(
   "/course",
   auth,
-  requireRole("admin"),
+  requireRole("admin", "teacher", "student"),
   courseRoutes
 );
 
@@ -89,7 +89,8 @@ router.use(
 
 // ------------------------------------------
 // ATTENDANCE ROUTES 
-// - Teacher marks attendance
+// - Teacher marks attendance for their courses
+// - Admin can view all attendance records
 // - Student can view their attendance summary
 // ------------------------------------------
 

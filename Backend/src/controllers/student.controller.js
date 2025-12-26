@@ -5,6 +5,23 @@ import { UserModel } from "../models/user.model.js";
 
 export class StudentController {
 
+  // GET STUDENTS BY SEMESTER AND PROGRAMME
+  static async getBySemesterAndProgramme(req, res) {
+    try {
+      const { semester, programme } = req.query;
+
+      if (!semester || !programme) {
+        return res.status(400).json({ error: "Missing required filters" });
+      }
+
+      const students = await StudentModel.getStudentsBySemesterAndProgramme(semester, programme);
+      res.json(students);
+    } catch (err) {
+      console.error("Error fetching students by filters:", err);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+
   // ADMIN → GET ALL STUDENTS
   static async getAll(req, res) {
     try {
@@ -69,7 +86,7 @@ export class StudentController {
 
       const updated = await StudentModel.updateStudent(id, updates);
 
-      res.json(updated);
+      res.json(updated); 
     } catch (err) {
       console.error("Error updating student:", err);
       res.status(500).json({ error: "Server error" });

@@ -2,6 +2,26 @@ import { AttendanceModel } from "../models/attendance.model.js";
 
 export class AttendanceController {
 
+    // ➤ INITIALIZE ATTENDANCE
+    static async initializeAttendance(req, res) {
+        try {
+            const { course_id } = req.params;
+            console.log("Initializing attendance for course_id:", course_id);
+
+            if (!course_id) {
+                return res.status(400).json({ error: "Missing course_id" });
+            }
+
+            const result = await AttendanceModel.initAttendance(course_id);
+
+            res.status(200).json(result);
+
+        } catch (err) {
+            console.error("Error initializing attendance:", err);
+            res.status(500).json({ error: "Server error" });
+        }
+    }
+
     // ➤ MARK OR UPDATE ATTENDANCE
     static async mark(req, res) {
         try {

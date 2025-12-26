@@ -2,14 +2,14 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../models/subject.dart';
 
 final teacherSelectedSubjectsProvider =
-    StateNotifierProvider<SelectedSubjectsNotifier, List<Subject>>(
+    StateNotifierProvider<SelectedSubjectsNotifier, List<Course>>(
       (ref) => SelectedSubjectsNotifier(),
     );
 
-class SelectedSubjectsNotifier extends StateNotifier<List<Subject>> {
+class SelectedSubjectsNotifier extends StateNotifier<List<Course>> {
   SelectedSubjectsNotifier() : super([]);
 
-  void toggle(Subject subject) {
+  void toggle(Course subject) {
     if (state.any((s) => s.code == subject.code)) {
       state = state.where((s) => s.code != subject.code).toList();
     } else {
@@ -18,4 +18,22 @@ class SelectedSubjectsNotifier extends StateNotifier<List<Subject>> {
   }
 
   void clear() => state = [];
+}
+
+
+final selectedCourseProvider =
+    StateNotifierProvider<SelectedCourseNotifier, Course?>(
+      (ref) => SelectedCourseNotifier(),
+    );
+
+class SelectedCourseNotifier extends StateNotifier<Course?> {
+  SelectedCourseNotifier() : super(null);
+
+  void setCourse(Course course) { 
+    state = course;
+  }
+
+  void clear() {
+    state = null;
+  }
 }

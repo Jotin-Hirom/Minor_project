@@ -2,6 +2,41 @@ import pool from "../config/pool.js";
 
 export class EnrollmentModel {
 
+    static async bulkEnrollStudents(course_id, student_ids) {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const enrolled = [];
+
+        const q = `
+            INSERT INTO student_enrollments (student_id, course_id)
+            VALUES ($1, $2)
+            ON CONFLICT (student_id, course_id) DO NOTHING
+            RETURNING *;
+        `;
+
+        for (const student_id of student_ids) {
+            const { rows } = await client.query(q, [student_id, course_id]);
+
+            if (rows[0]) {
+                enrolled.push(rows[0]);
+            }
+        }
+
+        await client.query("COMMIT");
+        return enrolled;
+
+    } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
+
     // ➤ ENROLL STUDENT INTO COURSE
     static async enrollStudent({ student_id, course_id }) {
         const client = await pool.connect();
@@ -34,18 +69,10 @@ export class EnrollmentModel {
     // ➤ GET ALL ENROLLMENTS FOR A COURSE
     static async getEnrollmentsByCourse(course_id) {
         const q = `
-            SELECT 
-                e.enrollment_id,
-                e.student_id,
-                s.sname AS student_name,
-                s.roll_no,
-                s.semester,
-                s.programme,
-                e.course_id
-            FROM student_enrollments e
-            JOIN students s ON e.student_id = s.user_id
-            WHERE e.course_id = $1
-            ORDER BY s.sname ASC;
+           SELECT st.sname, st.roll_no, st.user_id
+           FROM student_enrollments AS s
+           JOIN students AS st ON s.student_id = st.user_id
+           WHERE s.course_id = $1;
         `;
 
         const { rows } = await pool.query(q, [course_id]);

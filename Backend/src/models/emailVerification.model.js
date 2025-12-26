@@ -27,6 +27,16 @@ export class EmailVerificationModel {
     }
   }
 
+      static async verifyToken(token) {
+        const q = `
+            SELECT * FROM email_verification_tokens
+            WHERE token = $1 AND expires_at > NOW()
+            LIMIT 1
+        `;
+        const { rows } = await pool.query(q, [token]);
+        return rows[0];
+    }
+
   static async findValidOtp(user_id, otp) {
     const q = `
       SELECT * FROM email_verification_tokens
