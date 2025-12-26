@@ -96,29 +96,6 @@ class ProfileTab extends StatelessWidget {
         ),
 
         const SizedBox(height: 20),
-
-        // ACCOUNT INFO CARD
-        // Container(
-        //   decoration: BoxDecoration(
-        //     color: Colors.indigo.shade50,
-        //     borderRadius: BorderRadius.circular(18),
-        //   ),
-        //   padding: const EdgeInsets.all(16),
-        //   child: Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //       const Text(
-        //         "Account Details",
-        //         style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        //       ),
-        //       const SizedBox(height: 12),
-        //       _info("User ID", user?.id ?? "-"),
-        //       _info("Email", user?.email ?? "-"),
-        //       _info("Role", user?.role?.toUpperCase() ?? "-"),
-        //     ],
-        //   ),
-        // ),
-      
       ],
     );
   }
