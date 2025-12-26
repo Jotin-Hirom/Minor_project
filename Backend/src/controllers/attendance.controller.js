@@ -67,9 +67,10 @@ export class AttendanceController {
     static async getForCourse(req, res) {
         try {
             const { course_id } = req.params;
+            const { date } = req.query;
+            const attendance_date = date;
 
-            const data = await AttendanceModel.getCourseAttendance(course_id);
-
+            const data = await AttendanceModel.getCourseAttendance(course_id,attendance_date);
             res.json(data);
 
         } catch (err) {

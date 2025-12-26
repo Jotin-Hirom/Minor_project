@@ -10,7 +10,7 @@ class StudentModel {
 
   StudentModel({
     required this.userId,
-    required this.rollNo,
+    required this.rollNo, 
     required this.name,
     required this.semester,
     required this.programme,

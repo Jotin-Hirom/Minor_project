@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/subject.dart';
-import '../models/student.dart';
 import '../models/attendance.dart';
 import '../core/config/env.dart';
 import '../views/student/stu.dart' hide Subject;

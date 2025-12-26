@@ -2,7 +2,7 @@ class EnrolledStudent {
   final String userId;
   final String rollNo;
   final String name;
-  final String present;
+  final bool present;
 
   EnrolledStudent({
     required this.userId,
@@ -16,7 +16,7 @@ class EnrolledStudent {
       userId: json['user_id'],
       rollNo: json['roll_no'],
       name: json['sname'],
-      present: json['present'] == true ? 'Present' : 'Absent',
+      present: json['present'],
     );
   }
 }

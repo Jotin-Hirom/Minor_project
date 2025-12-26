@@ -10,4 +10,4 @@ export function hashTokened(token) {
 
 export function comparehashTokened(token, hashedToken) {
     return crypto.createHash("sha256").update(token).digest("hex") === hashedToken;
-}
+} 

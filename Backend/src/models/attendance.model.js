@@ -70,7 +70,6 @@ export class AttendanceModel {
     `, [course_id]);
 }
 
-
     // ➤ GET ATTENDANCE FOR ONE STUDENT IN ONE COURSE
     static async getStudentAttendance(student_id, course_id) {
         const q = `
@@ -84,20 +83,22 @@ export class AttendanceModel {
     }
 
     // GET FULL ATTENDANCE LIST FOR A COURSE
-    static async getCourseAttendance(course_id) {
+    static async getCourseAttendance(course_id, attendance_date) {
         const q = `
-               SELECT
-            st.user_id,
-            st.roll_no,
-            st.sname,
-            a.present
-        FROM attendance a
-        JOIN students st ON a.student_id = st.user_id
-        WHERE a.course_id = $1
-          AND a.attendance_date = CURRENT_DATE
-        ORDER BY st.roll_no;
-        `;
-        const { rows } = await pool.query(q, [course_id]);
+            SELECT
+                st.user_id,
+                st.roll_no,
+                st.sname,
+                a.present
+            FROM attendance a
+            JOIN students st ON a.student_id = st.user_id
+            WHERE a.course_id = $1
+              AND a.attendance_date = $2
+            ORDER BY st.roll_no;
+            `;
+            
+        
+        const { rows } = await pool.query(q, [course_id, attendance_date]);
         return rows;
     }
 

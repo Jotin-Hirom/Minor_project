@@ -11,15 +11,19 @@ import 'package:classqr/components/table_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:toastification/toastification.dart';
 
 import '../../../core/config/env.dart';
+import '../../../models/attendance_query.dart';
+import '../../../models/subject.dart';
+import '../../../providers/attendance_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/enrollment_provider.dart';
 import '../../../providers/teacher_selected_subject.dart';
 
 class ActivityPage extends ConsumerStatefulWidget {
-  final String course_id;
-  const ActivityPage({super.key, required this.course_id});
+  String course_id;
+  ActivityPage({super.key, required this.course_id});
 
   @override
   ConsumerState<ActivityPage> createState() => _ActivityPageState();
@@ -31,7 +35,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
 
   Future<void> _generateQr() async {
     final auth = ref.read(authStateProvider);
-
+    debugPrint(widget.course_id);
     final res = await http.post(
       Uri.parse("${Env.apiBaseUrl}/attendance/qr/generate"),
       headers: {
@@ -153,10 +157,52 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     }
   }
 
+  Future<void> fetchSubjects() async {
+    final auth = ref.read(authStateProvider);
+    final user = auth.user;
+    try {
+      final uri = Uri.parse(
+        "${Env.apiBaseUrl}/api/subject/${user?.id}/subjects",
+      );
+      final response = await http.get(
+        uri,
+        headers: {
+          "Authorization": "Bearer ${auth.token}",
+          "Content-Type": "application/json",
+        },
+      );
+      if ((response.statusCode == 200 || response.statusCode == 304) &&
+          response.body.isNotEmpty) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final List<Course> subjects = data
+            .map((e) => Course.fromJson(e))
+            .toList();
+        // Update the subjects provider with fetched data
+        // assign to the notifier's state directly since setSubjects isn't defined
+        (ref.read(teacherSelectedSubjectsProvider.notifier) as dynamic).state =
+            subjects;
+      } else {
+        errorMsg("Failed to fetch subjects.");
+      }
+    } catch (e) {
+      errorMsg("Something went wrong.");
+    }
+  }
+
+  void errorMsg(String msg) {
+    toastification.show(
+      type: ToastificationType.error,
+      context: context,
+      alignment: Alignment.topCenter,
+      title: Text(msg),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    _generateQr();
+    fetchSubjects();
+    // _generateQr();
   }
 
   @override
@@ -173,10 +219,11 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         final EdgeInsets padding = EdgeInsets.all(isDesktop ? 24 : 16);
         final selectedDate = ref.watch(selectedAttendanceDateProvider);
         final date =
-            "${selectedDate.year}/${selectedDate.month}/${selectedDate.day}";
+            "${selectedDate.year}-${selectedDate.month}-${selectedDate.day}";
+        // final attendanceAsync = ref.watch(attendanceProvider(courseId));
         return Scaffold(
           appBar: AppBar(
-            title: const Text("Activity Page"),
+            title: const Text("Attendance Page"),
             backgroundColor: Colors.indigo,
             foregroundColor: Colors.white,
           ),
@@ -220,9 +267,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                 isDesktop
                     ? Row(
                         children: [
-                          // ATTENDANCE TAKING SECTION
+                          // ATTENDANCE SECTION
                           SectionCard(
-                            title: "Take Attendance",
+                            title: "Export Attendance & Take Attendance",
                             child: Wrap(
                               spacing: 12,
                               runSpacing: 12,
@@ -235,32 +282,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                     await _generateQr();
                                   },
                                 ),
-                                CustomActionChip(
-                                  icon: Icons.edit_note,
-                                  label: "Manual Entry",
-                                  onPressed: () async {
-                                    // Handle manual entry here
-                                  },
-                                ),
-                                CustomActionChip(
-                                  icon: Icons.refresh,
-                                  label: "Reset Attendance",
-                                  onPressed: () async {
-                                    // Handle attendance reset here
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(width: 16),
-                          // EXPORT ATTENDANCE SECTION
-                          SectionCard(
-                            title: "Export Attendance",
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: const [
                                 ExportButton(
                                   icon: Icons.picture_as_pdf,
                                   label: "Export PDF",
@@ -278,9 +299,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                       )
                     : Column(
                         children: [
-                          // ATTENDANCE TAKING SECTION
+                          // ATTENDANCE SECTION
                           SectionCard(
-                            title: "Take Attendance",
+                            title: "Export Attendance & Take Attendance",
                             child: Wrap(
                               spacing: 12,
                               runSpacing: 12,
@@ -293,32 +314,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                     await _generateQr();
                                   },
                                 ),
-                                CustomActionChip(
-                                  icon: Icons.edit_note,
-                                  label: "Manual Entry",
-                                  onPressed: () async {
-                                    // Handle manual entry here
-                                  },
-                                ),
-                                CustomActionChip(
-                                  icon: Icons.refresh,
-                                  label: "Reset Attendance",
-                                  onPressed: () async {
-                                    // Handle attendance reset here
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-                          // EXPORT ATTENDANCE SECTION
-                          SectionCard(
-                            title: "Export Attendance",
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: const [
                                 ExportButton(
                                   icon: Icons.picture_as_pdf,
                                   label: "Export PDF",
@@ -343,9 +338,8 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                   child: Consumer(
                     builder: (context, ref, _) {
                       final course = ref.watch(selectedCourseProvider);
-
-                      final String? courseId = course?.course_id;
-                      if (courseId == null || courseId.isEmpty) {
+                      final String? course_id = course?.course_id;
+                      if (course_id == null || course_id.isEmpty) {
                         return const Padding(
                           padding: EdgeInsets.all(16),
                           child: Text("Invalid course selected"),
@@ -353,19 +347,24 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                       }
 
                       final enrolledAsync = ref.watch(
-                        enrolledStudentsProvider(widget.course_id),
+                        attendanceProvider(
+                          AttendanceQuery(course_id: course_id, date: date),
+                        ),
                       );
 
+                      debugPrint(enrolledAsync.toString());
                       return enrolledAsync.when(
                         loading: () => const Padding(
                           padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
+                          child: Center(child: CircularProgressIndicator()),
                         ),
                         error: (e, _) => Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text(
-                            e.toString(),
-                            style: const TextStyle(color: Colors.red),
+                          child: Center(
+                            child: Text(
+                              "Attendance not found for this $date. ${e.toString()}",
+                              style: const TextStyle(color: Colors.red),
+                            ),
                           ),
                         ),
                         data: (students) {
@@ -385,9 +384,8 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
 
                               ...students.map(
                                 (s) => AttendanceRow(
-                                  roll: s.rollNo,
-                                  name: s.name,
-                                  present: s.present,
+                                  student: s,
+                                  course_id: course_id,
                                 ),
                               ),
                             ],
@@ -397,7 +395,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                     },
                   ),
                 ),
-                Text(date, style: const TextStyle(fontWeight: FontWeight.w600)),
               ],
             ),
           ),

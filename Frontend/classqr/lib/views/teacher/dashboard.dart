@@ -25,16 +25,17 @@ class TeacherDashboard extends ConsumerStatefulWidget {
 
 class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
   @override
-  void initState() { 
+  void initState() {
     super.initState();
     // Kick off token refresh as soon as widget mounts.
     // We do this without awaiting in initState; the async method will check mounted before modifying state.
-    // _attemptRefresh();
+    // attemptRefresh();
   }
 
-  Future<void> _attemptRefresh() async {
+  Future<void> attemptRefresh() async {
     // Read current auth state
     final auth = ref.read(authStateProvider);
+
     final email = auth.user?.email.toLowerCase();
 
     if (email == null || email.isEmpty) {
@@ -43,8 +44,8 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
     }
 
     try {
-      final Map<String, dynamic> resp = await refreshToken(email);
-
+      final Map<String, dynamic> resp = await refreshToken(email, auth.token);
+      debugPrint(resp.toString());
       // Typical response shapes: { "token": "..."} or { "accessToken": "..."} or { "data": {"token": "..."}}
       String? newToken;
       if (resp.containsKey('token') && resp['token'] is String) {
@@ -64,16 +65,16 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
         // Example method names you might have: setToken, updateToken, loginWithToken, saveToken, etc.
         try {
           // Attempt a common notifier method
-          await ref.read(authStateProvider.notifier).updateToken(newToken);
+          // await ref.read(authStateProvider.notifier).updateToken(newToken);
         } catch (_) {
           // If the notifier doesn't have updateToken, attempt a few common alternatives
           try {
-            await ref.read(authStateProvider.notifier).setToken(newToken);
+            // await ref.read(authStateProvider.notifier).setToken(newToken);
           } catch (_) {
             try {
-              await ref
-                  .read(authStateProvider.notifier)
-                  .loginWithToken(newToken);
+              // await ref
+              //     .read(authStateProvider.notifier)
+              //     .loginWithToken(newToken);
             } catch (e) {
               // If none of the above exist, log a console message. You should wire this to the actual method.
               // You can also directly persist token to wherever your app stores it (secure storage), then update provider.
@@ -98,8 +99,8 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
           autoCloseDuration: const Duration(seconds: 4),
         );
         // force logout to clear stale state
-        await ref.read(authStateProvider.notifier).logout();
-        if (mounted) context.go('/auth');
+        // await ref.read(authStateProvider.notifier).logout();
+        // if (mounted) context.go('/auth');
       }
     } catch (e, st) {
       log('TeacherDashboard: refreshToken error: $e\n$st');
@@ -113,9 +114,9 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
       );
       // On network/server error, log the user out to avoid inconsistent state
       try {
-        await ref.read(authStateProvider.notifier).logout();
+        // await ref.read(authStateProvider.notifier).logout();
       } catch (_) {}
-      if (mounted) context.go('/auth');
+      // if (mounted) context.go('/auth');
     }
   }
 
@@ -129,7 +130,7 @@ class _TeacherDashboardState extends ConsumerState<TeacherDashboard> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text("ClassQR - Teacher Dashboard"),
-          backgroundColor: Colors.indigo, 
+          backgroundColor: Colors.indigo,
           foregroundColor: Colors.white,
           bottom: const TabBar(
             labelColor: Colors.white,

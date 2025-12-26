@@ -13,7 +13,7 @@ env.config();
 // compute expires_at for DB and cookie maxAge (ms)
 const refreshExpire = process.env.REFRESH_EXPIRE || "3d";
 const cookiesName = process.env.COOKIE_NAME || "refreshToken";
-
+ 
 /**
  * Register user (student or teacher) 
  * Expects JSON body with "role" field.
@@ -126,10 +126,13 @@ export const login = async (req, res) => {
 
     try {
       const refreshTokens = await RefreshTokenModel.getAllRefreshTokens(user.user_id);
+      console.log(refreshTokens)
+      console.log(refreshTokens.length)
       const token = refreshTokens.find(t => !t.revoked);
-      if (refreshTokens.length < 1 || token.revoked===true) {
-        const refreshToken = signRefreshToken({ id: user.user_id });
-        // Parse refresh expiry (1d → ms)
+      console.log(token)
+      const refreshToken = signRefreshToken({ id: user.user_id });
+      const hashedToken = await hashToken(refreshToken);
+             // Parse refresh expiry (1d → ms)
         let maxAgeMs;
         const match = refreshExpire.match(/^(\d+)([smhd])$/);
         if (match) {
@@ -142,16 +145,16 @@ export const login = async (req, res) => {
         }
 
         const expires_at = new Date(Date.now() + maxAgeMs);
+      if (refreshTokens.length < 1 || token.revoked===true || refreshTokens.token_hash === undefined) {
 
         // Store hashed refresh token in DB
-        const hashedToken = await hashToken(refreshToken);
-
         await RefreshTokenModel.insertRefreshToken({
           user_id: user.user_id,
-          token_hash: refreshToken,
+          token_hash: hashedToken,
           expires_at: expires_at,
           revoked: false,
         });
+      }
 
         // Set cookie
         const cookieOptions = {
@@ -161,8 +164,7 @@ export const login = async (req, res) => {
           path: "/",
           maxAge: maxAgeMs,
         };
-        res.cookie(cookiesName, hashedToken, cookieOptions);
-      }
+        res.cookie(cookiesName, refreshToken, cookieOptions);
     } catch (error) {
       console.error("LOGIN ERROR:", error);
       return res.status(500).json({
@@ -170,6 +172,7 @@ export const login = async (req, res) => {
         message: error.message,
       });
     }
+
     // Send response
     return res.status(200).json({
       success: true,
@@ -232,11 +235,14 @@ export const refreshAccessToken = async (req, res) => {
       success: false,
       message: "User not found.",
     });
-  }
+  } 
   const refreshDB = await RefreshTokenModel.getAllRefreshTokens(user.user_id);
+  console.log(refreshDB)
   const hashedToken = refreshDB[0].token_hash;
-    try {
-        const token = req.cookies.refreshToken;
+  try {
+    const token = req.cookies;
+    console.log(req.cookies)
+
         if (!token) return res.status(401).json({ error: "Refresh token missing" });
 
         if (token) {
@@ -247,7 +253,7 @@ export const refreshAccessToken = async (req, res) => {
         // verify signature
         let payload;
         try {
-          payload = verifyRefreshToken(hashedToken);
+          payload = verifyRefreshToken(token);
         } catch(e){
           return res.status(401).json({ error: "Cannot verify refresh token" });
         }
@@ -291,12 +297,12 @@ export const refreshAccessToken = async (req, res) => {
         // SAVE NEW REFRESH TOKEN
         await RefreshTokenModel.insertRefreshToken({
           user_id: user.user_id,
-            token_hash: newRefreshToken,
+            token_hash: hashedNew,
             expires_at: expires_at,
             revoked: false
         });
         // SET COOKIES  
-      res.cookie(cookiesName, hashedNew, {
+      res.cookie(cookiesName, newRefreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "none",

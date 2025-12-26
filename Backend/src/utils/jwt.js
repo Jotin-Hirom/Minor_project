@@ -17,7 +17,7 @@ export const signAccessToken = (payload) => {
 // Sign refresh token
 export const signRefreshToken = (payload) => {
   return jwt.sign(payload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRE });
-}; 
+};
 
 // Verify access token
 export const verifyAccessToken = (token) => { 

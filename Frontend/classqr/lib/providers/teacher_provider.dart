@@ -1,6 +1,4 @@
 import 'package:flutter_riverpod/legacy.dart';
-import '../models/subject.dart';
-import '../models/student.dart';
 import '../models/attendance.dart';
 import '../services/teacher_services.dart';
 import '../views/student/stu.dart';

@@ -12,7 +12,7 @@ router.post("/init/:course_id", AttendanceController.initializeAttendance);
 // GET ATTENDANCE FOR A STUDENT IN A COURSE
 router.get("/student/:student_id/course/:course_id", AttendanceController.getForStudent);
 
-// GET FULL COURSE ATTENDANCE
+// GET FULL COURSE ATTENDANCE and selected date
 router.get("/course/:course_id", AttendanceController.getForCourse); 
 
 // DELETE ATTENDANCE RECORD

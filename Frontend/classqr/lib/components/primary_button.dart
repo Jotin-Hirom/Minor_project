@@ -60,14 +60,14 @@ class PrimaryButton extends ConsumerWidget {
       );
     }
 
-    void successMsg(String msg) {
-      toastification.show(
-        type: ToastificationType.success,
-        context: context,
-        alignment: Alignment.topCenter,
-        title: Text(msg),
-      );
-    }
+    // void successMsg(String msg) {
+    //   toastification.show(
+    //     type: ToastificationType.success,
+    //     context: context,
+    //     alignment: Alignment.topCenter,
+    //     title: Text(msg),
+    //   );
+    // }
 
     void showStudentsDialog(
       BuildContext context,

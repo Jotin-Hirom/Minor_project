@@ -1,8 +1,6 @@
-import 'package:classqr/models/app_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import '../../providers/auth_provider.dart';
 import 'pages/login.dart';
 import 'pages/signup.dart';
 import 'pages/forgot_password.dart';

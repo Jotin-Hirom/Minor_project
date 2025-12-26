@@ -26,6 +26,6 @@ class AttendanceRecord {
     'subjectCode': subjectCode,
     'studentId': studentId,
     'date': date.toIso8601String(),
-    'present': present,
+    'present': present, 
   };
 }

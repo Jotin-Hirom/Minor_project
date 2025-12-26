@@ -9,7 +9,7 @@ export class RefreshTokenModel {
             const q = "SELECT * FROM refresh_tokens WHERE user_id = $1";
             const { rows } = await client.query(q, [user_id]);
             await client.query("COMMIT");
-            return rows;
+            return rows; 
         } catch (error) {
             await client.query("ROLLBACK");
             throw error;
