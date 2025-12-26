@@ -1,7 +1,4 @@
 // ignore_for_file: deprecated_member_use
-import 'dart:io';
-
-import 'package:classqr/core/config/env.dart';
 import 'package:classqr/models/app_user.dart';
 import 'package:classqr/services/image_Picker.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +22,7 @@ class ProfileTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imagePath = ref.watch(profileImagePathProvider);
+    // final imagePath = ref.watch(profileImagePathProvider);
     // user.id
     studentId = user?.id.toString();
     print(studentId);
@@ -334,17 +331,17 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _info(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text("$title: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
+  // Widget _info(String title, String value) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 4),
+  //     child: Row(
+  //       children: [
+  //         Text("$title: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+  //         Expanded(child: Text(value)),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // Future<void> updateStudentProfile() async {
 

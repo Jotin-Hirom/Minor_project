@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:toastification/toastification.dart';
 
-import '../../../core/config/env.dart';
 import '../../../models/subject.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/subject_provider.dart';
@@ -23,7 +19,6 @@ class _SelectSubjectsPageState extends ConsumerState<SelectSubjectsPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _subCodeController = TextEditingController();
   final TextEditingController _subNameController = TextEditingController();
-  bool _isCreating = false;
 
   String searchQuery = "";
   Timer? _debounce;

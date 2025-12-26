@@ -100,15 +100,15 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _info(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text("$title: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
+  // Widget _info(String title, String value) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 4),
+  //     child: Row(
+  //       children: [
+  //         Text("$title: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+  //         Expanded(child: Text(value)),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
